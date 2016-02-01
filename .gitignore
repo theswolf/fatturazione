@@ -1,0 +1,9 @@
+/bin/
+/lib_managed
+**/target/*
+.settings
+.cache-main
+.classpath
+.project
+RUNNING_PID
+*.xls*

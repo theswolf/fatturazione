@@ -6,5 +6,7 @@ retrieveManaged := true
 
 libraryDependencies  ++= Seq(
   "org.apache.poi" % "poi" % "3.13",
-  "org.apache.poi" % "poi-ooxml" % "3.13"
+  "org.apache.poi" % "poi-ooxml" % "3.13",
+  "com.github.nscala-time" %% "nscala-time" % "2.8.0"
+  
 )

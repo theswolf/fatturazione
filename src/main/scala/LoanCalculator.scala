@@ -6,44 +6,103 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import java.util.Map
 import java.util.HashMap
 import java.io.FileOutputStream
-//remove if not needed
 import scala.collection.JavaConversions._
+import model.DatiFatturazione
+import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.DateTime
+import model.DatiFatturazione
+import org.joda.time.format.DateTimeFormat
+import model.Persona
+import model.Persona
 
 object LoanCalculator {
 
-	def intestazione(wb: Workbook, sheet: Sheet, styles: Map[String, CellStyle]):Workbook = {
+	def intestazione(wb: Workbook, sheet: Sheet)(implicit styles: Map[String, CellStyle]):Workbook = {
 			//val titleRow = sheet.createRow(0)
-			row(0,1,5,sheet,styles,"Geymonat Christian",None)
-			/*var titleRow = sheet.createRow(0)
-					titleRow.setHeightInPoints(35)
-					//var i = 1
+			row(0,1,10,sheet,Option(styles.get("title")),"Geymonat Christian",None)
+			row(1,1,10,sheet,Option(styles.get("subtitle")),"Regione Paschetti 1, 10060 – Garzigliana ( TO )",None)
+			row(2,1,10,sheet,Option(styles.get("subtitle")),"Cell. 3492109906",None)
+			row(3,1,10,sheet,Option(styles.get("subtitle")),"P.IVA  09951550012 -C.Fisc. GYMCRS81P22G674W",None)
+			row(3,11,15,sheet,Option(styles.get("simpleBold")),"FATTURA / PARCELLA",None)
 
-					for (i <- 1 to 5) {
-						titleRow.createCell(i).setCellStyle(styles.get("title"))
-					}
+			wb
+	}
+	
+	def dati(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFatturazione)(implicit styles: Map[String, CellStyle]):Workbook = {
+			//val titleRow = sheet.createRow(0)
+			row(5,1,1,sheet,Option(styles.get("item_left")),"Data Fatt.",None)
+			row(5,2,2,sheet,Option(styles.get("item_rigth")),
+			     Option(datiFatturazione.dataFatt).getOrElse(DateTime.now()).toString("dd MMM yyyy")
+			    ,None)
+			    
+			row(6,1,2,sheet,Option(styles.get("item_left")),"Num Fatt.",None)
+			row(6,2,3,sheet,Option(styles.get("item_rigth")),
+			    datiFatturazione.numFatt.toString()
+			    ,None)
+			
+			row(7,1,2,sheet,Option(styles.get("item_left")),"Riferim. ",None)
+			row(7,2,3,sheet,Option(styles.get("item_rigth")),
+			    datiFatturazione.riferim
+			    ,None)
+			    
+			row(8,1,2,sheet,Option(styles.get("item_left")),"Dara Scad. ",None)
+			row(8,2,3,sheet,Option(styles.get("item_rigth")),
+			    datiFatturazione.dataScad
+			    ,None)
 
-			var titleCell = titleRow.getCell(2)
-					titleCell.setCellValue("Simple Loan Calculator")
-					sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$F$1"))
-			 */
+			wb
+	}
+	
+	def destinatario(wb: Workbook, sheet: Sheet, pf:Persona)(implicit styles: Map[String, CellStyle]):Workbook = {
+			//val titleRow = sheet.createRow(0)
+			row(5,11,11,sheet,Option(styles.get("item_left")),Option(pf.sigla).getOrElse(""),None)
+			row(6,11,11,sheet,Option(styles.get("item_left")),Option(pf.denominazione).getOrElse(""),None)
+			
+			row(8,11,11,sheet,Option(styles.get("item_left")),Option(pf.via).getOrElse(""),None)
+			row(9,11,11,sheet,Option(styles.get("item_left")),Option(pf.cap).getOrElse("")+" "+Option(pf.indirizzo).getOrElse(""),None)
+			
+			row(10,11,11,sheet,Option(styles.get("item_left")),"P.IVA",None)
+			row(10,12,12,sheet,Option(styles.get("item_left")),Option(pf.pIva).getOrElse(""),None)
+			
 
 			wb
 	}
 
-	def row(rownum: Int, from: Int, to:Int, sheet: Sheet,styles: Map[String, CellStyle],label: String,value: Option[Any]) : Row = {
-			var titleRow = sheet.createRow(rownum)
-					titleRow.setHeightInPoints(35)
-					for (i <- from to to) {
-						titleRow.createCell(i).setCellStyle(styles.get("title"))
+	def row(rownum: Int, from: Int, to:Int, sheet: Sheet,style: Option[CellStyle],label: String,value: Option[Any]) : Row = {
+			implicit var titleRow = Option(sheet.getRow(rownum)) match {
+			  case None => sheet.createRow(rownum)
+			  case Some(s) => s
+			}
+					
+			val getCell = (num:Int) => {
+			  Option(implicitly[Row].getCell(num)) match {
+			  case None =>  implicitly[Row].createCell(num)
+			  case Some(c) => c
+			  }
+			}
+			
+			titleRow.setHeightInPoints(20)
+					for (i <- from to ((from: Int,to:Int) => to match {
+					  case `from` => to+1
+					  case _ => to
+					})(from,to)) {
+					  style match {
+					    case Some(s) => getCell(i).setCellStyle(s)
+					    case None =>  getCell(i)
+					  }
+						
 					}
-			var titleCell = titleRow.getCell(2)
+			var titleCell = titleRow.getCell(from+1)
 					titleCell.setCellValue(label)
 					//sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$F$1"))
-					titleCell = titleRow.getCell(2+to)
+					
 	
 					value match {
 					  case None           => Unit
-					  case Some(_) => titleCell.setCellValue(value.toString())
+					  case Some(_) => {
+					    titleCell = titleRow.getCell(2+to)
+					    titleCell.setCellValue(value.toString())
+					    }
 					  
 					}
 					titleRow
@@ -52,7 +111,7 @@ object LoanCalculator {
 	def main(args: Array[String]) {
 		var wb: Workbook = null
 				wb = if (args.length > 0 && args(0) == "-xls") new HSSFWorkbook() else new XSSFWorkbook()
-	val styles = createStyles(wb)
+	implicit val styles = createStyles(wb)
 	val sheet = wb.createSheet("Loan Calculator")
 	sheet.setPrintGridlines(false)
 	sheet.setDisplayGridlines(false)
@@ -60,13 +119,13 @@ object LoanCalculator {
 	printSetup.setLandscape(true)
 	sheet.setFitToPage(true)
 	sheet.setHorizontallyCenter(true)
-	sheet.setColumnWidth(0, 3 * 256)
-	sheet.setColumnWidth(1, 3 * 256)
-	sheet.setColumnWidth(2, 11 * 256)
-	sheet.setColumnWidth(3, 14 * 256)
-	sheet.setColumnWidth(4, 14 * 256)
-	sheet.setColumnWidth(5, 14 * 256)
-	sheet.setColumnWidth(6, 14 * 256)
+	for (i:Int <- (0 to 6)) {
+	  i match {
+	    case 0 | 1 => sheet.setColumnWidth(i, 3 * 256)
+	    case 2 => sheet.setColumnWidth(i, 11 * 256)
+	    case _ => sheet.setColumnWidth(i, 1 * 256)
+	  }
+	}
 	createNames(wb)
 	/*val titleRow = sheet.createRow(0)
 	titleRow.setHeightInPoints(35)
@@ -78,8 +137,24 @@ object LoanCalculator {
 	val titleCell = titleRow.getCell(2)
 			titleCell.setCellValue("Simple Loan Calculator")
 			sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$H$1"))*/
-	intestazione(wb, sheet,styles)
-	var row = sheet.createRow(2)
+	intestazione(wb, sheet)
+	dati(wb, sheet, new DatiFatturazione(
+	  DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
+	  1,
+	  "Consulenza Gennaio ALTEN",
+	  3586.80,
+	  "rimessa diretta"
+	))
+	destinatario(wb,sheet,new Persona(
+	  "Spettabile",
+	  "ULIXE TECHNOLOGIES MILANO SRL",
+	  "Corso Italia 7/Bis",
+	   "Busto Arsizio (Va)",
+	    "21052",
+	    "03359310129"
+	    
+	))
+	/*var row = sheet.createRow(2)
 	var cell = row.createCell(4)
 	cell.setCellValue("Enter values")
 	cell.setCellStyle(styles.get("item_right"))
@@ -135,7 +210,7 @@ object LoanCalculator {
 	cell.setCellStyle(styles.get("item_left"))
 	cell = row.createCell(4)
 	cell.setCellFormula("IF(Values_Entered,Monthly_Payment*Number_of_Payments,\"\")")
-	cell.setCellStyle(styles.get("formula_$"))
+	cell.setCellStyle(styles.get("formula_$"))*/
 	var file = "loan-calculator"+System.currentTimeMillis+".xls"
 	if (wb.isInstanceOf[XSSFWorkbook]) file += "x"
 	val out = new FileOutputStream(file)
@@ -154,17 +229,38 @@ object LoanCalculator {
 					style.setBorderBottom(CellStyle.BORDER_DOTTED)
 					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
 					styles.put("title", style)
+					
+					val subtitleFont = wb.createFont()
+					subtitleFont.setFontHeightInPoints(9.toShort)
+					subtitleFont.setFontName("Trebuchet MS")
+					style = wb.createCellStyle()
+					style.setFont(subtitleFont)
+					style.setBorderBottom(CellStyle.BORDER_DOTTED)
+					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+					styles.put("subtitle", style)
+					
+					val simpleBold = wb.createFont()
+					simpleBold.setFontHeightInPoints(9.toShort)
+					simpleBold.setFontName("Trebuchet MS")
+					simpleBold.setBold(true)
+					style = wb.createCellStyle()
+					style.setFont(simpleBold)
+					styles.put("simpleBold", style)
+					
 					val itemFont = wb.createFont()
 					itemFont.setFontHeightInPoints(9.toShort)
 					itemFont.setFontName("Trebuchet MS")
+					itemFont.setBold(true)
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_LEFT)
 					style.setFont(itemFont)
 					styles.put("item_left", style)
+					
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_RIGHT)
 					style.setFont(itemFont)
 					styles.put("item_right", style)
+					
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_RIGHT)
 					style.setFont(itemFont)

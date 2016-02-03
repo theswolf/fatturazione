@@ -1,3 +1,4 @@
+package fatturazione
 
 import org.apache.poi.xssf.usermodel._
 import org.apache.poi.ss.usermodel._
@@ -55,13 +56,89 @@ object LoanCalculator {
 										wb
 	}
 	
+	def modalitaPagamento(wb: Workbook, sheet: Sheet)(implicit styles: Map[String, CellStyle]):Workbook = {
+	  row(28,8,10,sheet,Option(styles.get("orange")),"MODALITA' PAGAMENTO",false)
+		row(29,8,10,sheet,Option(styles.get("orange")),"rimessa diretta con",false)
+		row(30,8,10,sheet,Option(styles.get("orange")),"Bonifico bancario sul  C/C",false)
+		row(31,8,10,sheet,Option(styles.get("orange")),"n. 000100748266",false)
+		row(32,8,10,sheet,Option(styles.get("orange")),"UniCredit – S.Secondo di Pinerolo",false)
+		row(33,8,10,sheet,Option(styles.get("orange")),"IBAN: IT87M0200830950000100748266",false)
+		wb
+	}
+	
 	def fattura(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
 	  //Data	Rif.	Prestazione					GG	€/unit.	EURO
+	  val startrow = 12
+	  val height = 15
+	  val startcol=8
+	  val width=5
+	  row(startrow,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),Seq("Data","Rif.","Prestazione","GG","€/Unit","Euro"),false)
+	  var counter = 1;
+	  datiFatturazione.prestazioni.map { p =>  
+	    
+	    row(startrow+counter,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(p.data.toString("dd/MM/yyyy"),p.rif,p.prestazione,p.gg,p.euroUnit,"€ "+((d:Double) => f"$d%1.2f")(p.euro)),false)
+	    counter+=1
+	  }
+	  
+	  for(i <- (1 to height-1)) {
+	     row(startrow+i,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(),false)
+	  } 
+	  //ripepilogo
+	  val imponibile = (datiFatturazione.prestazioni.map { p => p.euro }(collection.breakOut): List[(Double)]).sum
+	   row(startrow+height,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),
+	       Seq("","","IMPONIBILE","","","€ "+((d:Double) => f"$d%1.2f")(imponibile))
+	           ,false)
+	  
+	  
+	  
 
-	  row(12,8,13,sheet,Option(styles.get("fattura_head")),Seq("Data","Rif.","Prestazione","GG","€/Unit","Euro"),false)
-	
+	  
+	  aroundBorder(sheet, startrow, startrow+height, startcol, startcol+width)
 	  
 	  wb
+	}
+	
+	def aroundBorder(sheet:Sheet,start:Int,height:Int,left:Int,right:Int):Unit = {
+	  
+	  for(rownum <- (start to height)) { 
+	     var r = sheet.getRow(rownum)
+	     println(s"row $rownum")
+	     //aroundBorderSide(r,left,right,)
+	     rownum match {
+	       case `start` => aroundBorderSide(r,left,right,0)
+	       case `height`  => aroundBorderSide(r,left,right,2)
+	       case _ => aroundBorderSide(r,left,right,-1)
+	     }
+	  }
+	  
+	}
+	
+	def aroundBorderSide(r:Row,left:Int,right:Int,border:Short):Unit = {
+	  
+	   for( col <- (left to right)) {
+	          var c =  r.getCell(col)
+	          //println(s"	-> col $col up $up down $down left $left right $right")
+	           applyStyle(c,border)
+	          
+	          col match {
+	            case `left` =>  applyStyle(c,3)
+	            case `right` => applyStyle(c,1)
+	            case _ =>
+	          }
+	         
+	        }
+	}
+	
+	def applyStyle(c:Cell,direction:Short) {
+	  //top right bottom left
+	  var style = c.getCellStyle
+	  direction match {
+	    case 0 => style.setBorderTop(CellStyle.BORDER_HAIR)
+	    //case 1 =>  style.setBorderRight(CellStyle.BORDER_THIN)
+	    case 2 => style.setBorderBottom(CellStyle.BORDER_HAIR)
+	    //case 3 =>  style.setBorderLeft(CellStyle.BORDER_THIN)
+	    case _ => 
+	  }
 	}
 
 	def destinatario(wb: Workbook, sheet: Sheet, pf:Persona)(implicit styles: Map[String, CellStyle]):Workbook = {
@@ -122,7 +199,7 @@ object LoanCalculator {
 		        case Some(s) => s.toString()
 		      }
 		     )
-		  counter=counter+1
+		  counter+=1
 		}
 
 		titleRow
@@ -148,9 +225,9 @@ object LoanCalculator {
 	}
 		
 	for(i <- (8 to 13)) {
-	  sheet.setColumnWidth(i, 15 * 256)
+	  sheet.setColumnWidth(i, 20 * 256)
 	}
-	createNames(wb)
+	//createNames(wb)
 	/*val titleRow = sheet.createRow(0)
 	titleRow.setHeightInPoints(35)
 	var i = 1
@@ -162,25 +239,27 @@ object LoanCalculator {
 			titleCell.setCellValue("Simple Loan Calculator")
 			sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$H$1"))*/
 	intestazione(wb, sheet)
-	dati(wb, sheet, new DatiFatturazione(
+	dati(wb, sheet, DatiFatturazione(
 			DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
 			1,
 			"Consulenza Gennaio ALTEN",
 			3586.80,
 			"rimessa diretta"
 			))
-			destinatario(wb,sheet,new Persona(
+			destinatario(wb,sheet,Persona(
 					"Spettabile",
 					"ULIXE TECHNOLOGIES MILANO SRL",
 					"Corso Italia 7/Bis",
 					"Busto Arsizio (Va)",
 					"21052",
 					"03359310129"
-
+					
 					))
 
-					fattura(wb,sheet,new DatiFattura(
-							Set(new Prestazione(
+					//Prestazione(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131"),"consulenza","ConsulenzaGennaio",14,210)
+					
+					fattura(wb,sheet,DatiFattura(
+							Set(Prestazione(
 							  DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
 							  "consulenza",
 							  "Consulenza Gennaio",
@@ -188,6 +267,8 @@ object LoanCalculator {
 							  210									
 							  ))    
 							))
+							
+			modalitaPagamento(wb,sheet)
 							/*var row = sheet.createRow(2)
 	var cell = row.createCell(4)
 	cell.setCellValue("Enter values")
@@ -319,6 +400,16 @@ object LoanCalculator {
 					style.setFillForegroundColor(IndexedColors.TURQUOISE.getIndex)
 					style.setFillPattern(CellStyle.SOLID_FOREGROUND);
 					styles.put("fattura_head", style)
+					
+					style = wb.createCellStyle()
+					style.setAlignment(CellStyle.ALIGN_LEFT)
+					style.setFont(itemFont)
+					//style.setBorderRight(CellStyle.BORDER_DOTTED)
+					//style.setBorderLeft(CellStyle.BORDER_DOTTED)
+					//style.setFillBackgroundColor(IndexedColors.BLUE.getIndex)
+					style.setFillForegroundColor(IndexedColors.ORANGE.getIndex)
+					style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+					styles.put("orange", style)
 
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_RIGHT)

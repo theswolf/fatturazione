@@ -38,26 +38,26 @@ object LoanCalculator {
 				Option(datiFatturazione.dataFatt).getOrElse(DateTime.now()).toString("dd MMM yyyy")
 				,true)
 
-				row(6,1,2,sheet,Option(styles.get("item_left_bold")),"Num Fatt.",true)
-				row(6,2,3,sheet,Option(styles.get("item_rigth")),
+    row(6,1,2,sheet,Option(styles.get("item_left_bold")),"Num Fatt.",true)
+		row(6,2,3,sheet,Option(styles.get("item_rigth")),
 						datiFatturazione.numFatt.toString()
 						,true)
 
-						row(7,1,2,sheet,Option(styles.get("item_left_bold")),"Riferim. ",true)
-						row(7,2,3,sheet,Option(styles.get("item_rigth")),
+		row(7,1,2,sheet,Option(styles.get("item_left_bold")),"Riferim. ",true)
+		row(7,2,3,sheet,Option(styles.get("item_rigth")),
 								datiFatturazione.riferim
 								,true)
 
-								row(8,1,2,sheet,Option(styles.get("item_left_bold")),"Data Scad. ",true)
-								row(8,2,3,sheet,Option(styles.get("item_rigth")),
+		row(8,1,2,sheet,Option(styles.get("item_left_bold")),"Data Scad. ",true)
+		row(8,2,3,sheet,Option(styles.get("item_rigth")),
 										datiFatturazione.dataScad
 										,true)
 
-										wb
+		wb
 	}
-	
+
 	def modalitaPagamento(wb: Workbook, sheet: Sheet)(implicit styles: Map[String, CellStyle]):Workbook = {
-	  row(28,8,10,sheet,Option(styles.get("orange")),"MODALITA' PAGAMENTO",false)
+		row(28,8,10,sheet,Option(styles.get("orange")),"MODALITA' PAGAMENTO",false)
 		row(29,8,10,sheet,Option(styles.get("orange")),"rimessa diretta con",false)
 		row(30,8,10,sheet,Option(styles.get("orange")),"Bonifico bancario sul  C/C",false)
 		row(31,8,10,sheet,Option(styles.get("orange")),"n. 000100748266",false)
@@ -65,80 +65,84 @@ object LoanCalculator {
 		row(33,8,10,sheet,Option(styles.get("orange")),"IBAN: IT87M0200830950000100748266",false)
 		wb
 	}
-	
-	def fattura(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
-	  //Data	Rif.	Prestazione					GG	€/unit.	EURO
-	  val startrow = 12
-	  val height = 15
-	  val startcol=8
-	  val width=5
-	  row(startrow,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),Seq("Data","Rif.","Prestazione","GG","€/Unit","Euro"),false)
-	  var counter = 1;
-	  datiFatturazione.prestazioni.map { p =>  
-	    
-	    row(startrow+counter,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(p.data.toString("dd/MM/yyyy"),p.rif,p.prestazione,p.gg,p.euroUnit,"€ "+((d:Double) => f"$d%1.2f")(p.euro)),false)
-	    counter+=1
-	  }
-	  
-	  for(i <- (1 to height-1)) {
-	     row(startrow+i,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(),false)
-	  } 
-	  //ripepilogo
-	  val imponibile = (datiFatturazione.prestazioni.map { p => p.euro }(collection.breakOut): List[(Double)]).sum
-	   row(startrow+height,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),
-	       Seq("","","IMPONIBILE","","","€ "+((d:Double) => f"$d%1.2f")(imponibile))
-	           ,false)
-	  
-	  
-	  
 
-	  
-	  aroundBorder(sheet, startrow, startrow+height, startcol, startcol+width)
-	  
-	  wb
+	def riepilogo(wb: Workbook, sheet: Sheet,datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
+		val totImponibile = imponibile(datiFatturazione)
+				val iva = (22 * totImponibile) / 100;
+		row(28,11,13,sheet,Option(styles.get("yellow")),Seq("TOTALE IMPONIBILE","","€ "+((d:Double) => f"$d%1.2f")(totImponibile)),false)
+		row(29,11,13,sheet,Option(styles.get("yellow")),Seq("IVA","22%","€ "+((d:Double) => f"$d%1.2f")(iva)),false)
+		row(30,11,13,sheet,Option(styles.get("yellow")),Seq("TOTALE FATTURA","","€ "+((d:Double) => f"$d%1.2f")(totImponibile+iva)),false)
+		row(33,11,13,sheet,Option(styles.get("yellow_bold")),Seq("NETTO DA VERSARE","","€ "+((d:Double) => f"$d%1.2f")(totImponibile+iva)),false)
+
+		wb
 	}
-	
+
+	def imponibile(d: DatiFattura):Double = {(d.prestazioni.map { p => p.euro }(collection.breakOut): List[(Double)]).sum}
+
+	def fattura(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
+		val startrow = 12
+				val height = 15
+				val startcol=8
+				val width=5
+				row(startrow,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),Seq("Data","Rif.","Prestazione","GG","€/Unit","Euro"),false)
+				var counter = 1;
+		datiFatturazione.prestazioni.map { p =>  
+
+		row(startrow+counter,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(p.data.toString("dd/MM/yyyy"),p.rif,p.prestazione,p.gg,p.euroUnit,"€ "+((d:Double) => f"$d%1.2f")(p.euro)),false)
+		counter+=1
+		}
+
+		for(i <- (1 to height-1)) {
+			row(startrow+i,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(),false)
+		} 
+
+		row(startrow+height,startcol,startcol+width,sheet,Option(styles.get("fattura_head")),
+				Seq("","","IMPONIBILE","","","€ "+((d:Double) => f"$d%1.2f")(imponibile(datiFatturazione)))
+				,false)
+
+				aroundBorder(sheet, startrow, startrow+height, startcol, startcol+width)
+				wb
+	}
+
 	def aroundBorder(sheet:Sheet,start:Int,height:Int,left:Int,right:Int):Unit = {
-	  
-	  for(rownum <- (start to height)) { 
-	     var r = sheet.getRow(rownum)
-	     println(s"row $rownum")
-	     //aroundBorderSide(r,left,right,)
-	     rownum match {
-	       case `start` => aroundBorderSide(r,left,right,0)
-	       case `height`  => aroundBorderSide(r,left,right,2)
-	       case _ => aroundBorderSide(r,left,right,-1)
-	     }
-	  }
-	  
+
+		for(rownum <- (start to height)) { 
+			var r = sheet.getRow(rownum)
+					println(s"row $rownum")
+					rownum match {
+					case `start` => aroundBorderSide(r,left,right,0)
+					case `height`  => aroundBorderSide(r,left,right,2)
+					case _ => aroundBorderSide(r,left,right,-1)
+			}
+		}
+
 	}
-	
+
 	def aroundBorderSide(r:Row,left:Int,right:Int,border:Short):Unit = {
-	  
-	   for( col <- (left to right)) {
-	          var c =  r.getCell(col)
-	          //println(s"	-> col $col up $up down $down left $left right $right")
-	           applyStyle(c,border)
-	          
-	          col match {
-	            case `left` =>  applyStyle(c,3)
-	            case `right` => applyStyle(c,1)
-	            case _ =>
-	          }
-	         
-	        }
+
+		for( col <- (left to right)) {
+			var c =  r.getCell(col)
+					applyStyle(c,border)
+
+					col match {
+					case `left` =>  applyStyle(c,3)
+					case `right` => applyStyle(c,1)
+					case _ =>
+			}
+
+		}
 	}
-	
+
 	def applyStyle(c:Cell,direction:Short) {
-	  //top right bottom left
-	  var style = c.getCellStyle
-	  direction match {
-	    case 0 => style.setBorderTop(CellStyle.BORDER_HAIR)
-	    //case 1 =>  style.setBorderRight(CellStyle.BORDER_THIN)
-	    case 2 => style.setBorderBottom(CellStyle.BORDER_HAIR)
-	    //case 3 =>  style.setBorderLeft(CellStyle.BORDER_THIN)
-	    case _ => 
-	  }
+		//top right bottom left
+		var style = c.getCellStyle
+				direction match {
+				case 0 => style.setBorderTop(CellStyle.BORDER_HAIR)
+						//case 1 =>  style.setBorderRight(CellStyle.BORDER_THIN)
+				case 2 => style.setBorderBottom(CellStyle.BORDER_HAIR)
+				//case 3 =>  style.setBorderLeft(CellStyle.BORDER_THIN)
+				case _ => 
+		}
 	}
 
 	def destinatario(wb: Workbook, sheet: Sheet, pf:Persona)(implicit styles: Map[String, CellStyle]):Workbook = {
@@ -155,12 +159,12 @@ object LoanCalculator {
 
 		wb
 	}
-	
+
 
 	def row(rownum: Int, from: Int, to:Int, sheet: Sheet,style: Option[CellStyle],value: Any,space:Boolean) : Row =  {
-	  row(rownum,from,to,sheet,style,Seq(value),space)
+		row(rownum,from,to,sheet,style,Seq(value),space)
 	}
-	
+
 	def row(rownum: Int, from: Int, to:Int, sheet: Sheet,style: Option[CellStyle],values: Seq[Any],space:Boolean) : Row = {
 		implicit var titleRow = Option(sheet.getRow(rownum)) match {
 		case None => sheet.createRow(rownum)
@@ -185,31 +189,31 @@ object LoanCalculator {
 			}
 
 		}
-		
+
 		var counter:Int = space match {
-		  case true => 1
-		  case false => 0
+		case true => 1
+		case false => 0
 		}
-		
+
 		for(i <- values) {
-		  getCell(from+counter).setCellValue(
-		      //i.getOrElse("").toString()
-		      Option(i) match {
-		        case None => ""
-		        case Some(s) => s.toString()
-		      }
-		     )
-		  counter+=1
+			getCell(from+counter).setCellValue(
+					//i.getOrElse("").toString()
+					Option(i) match {
+					case None => ""
+					case Some(s) => s.toString()
+					}
+					)
+					counter+=1
 		}
 
 		titleRow
 	} 
-
-	def main(args: Array[String]) {
-		var wb: Workbook = null
-				wb = if (args.length > 0 && args(0) == "-xls") new HSSFWorkbook() else new XSSFWorkbook()
+	
+	def exportToXls(datiFattura:DatiFattura,datiFatturazione:DatiFatturazione,dest:Persona) = {
+	  
+	var  wb = new XSSFWorkbook()
 	implicit val styles = createStyles(wb)
-	val sheet = wb.createSheet("Loan Calculator")
+	val sheet = wb.createSheet("Fattura")
 	sheet.setPrintGridlines(false)
 	sheet.setDisplayGridlines(false)
 	val printSetup = sheet.getPrintSetup
@@ -223,114 +227,59 @@ object LoanCalculator {
 		case _ => sheet.setColumnWidth(i, 1 * 256)
 		}
 	}
-		
-	for(i <- (8 to 13)) {
-	  sheet.setColumnWidth(i, 20 * 256)
-	}
-	//createNames(wb)
-	/*val titleRow = sheet.createRow(0)
-	titleRow.setHeightInPoints(35)
-	var i = 1
-	while (i <= 7) {
-		titleRow.createCell(i).setCellStyle(styles.get("title"))
-		i += 1
-	}
-	val titleCell = titleRow.getCell(2)
-			titleCell.setCellValue("Simple Loan Calculator")
-			sheet.addMergedRegion(CellRangeAddress.valueOf("$C$1:$H$1"))*/
-	intestazione(wb, sheet)
-	dati(wb, sheet, DatiFatturazione(
-			DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
-			1,
-			"Consulenza Gennaio ALTEN",
-			3586.80,
-			"rimessa diretta"
-			))
-			destinatario(wb,sheet,Persona(
-					"Spettabile",
-					"ULIXE TECHNOLOGIES MILANO SRL",
-					"Corso Italia 7/Bis",
-					"Busto Arsizio (Va)",
-					"21052",
-					"03359310129"
-					
-					))
 
-					//Prestazione(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131"),"consulenza","ConsulenzaGennaio",14,210)
+	for(i <- (8 to 13)) {
+		sheet.setColumnWidth(i, 20 * 256)
+	}
+
+
+	    intestazione(wb, sheet)
+	  dati(wb, sheet, datiFatturazione)
+	  destinatario(wb, sheet, dest)
+    fattura(wb,sheet,datiFattura)
+    modalitaPagamento(wb,sheet)
+	  riepilogo(wb,sheet,datiFattura)
+
+	 var file = "loan-calculator"+System.currentTimeMillis+".xls"
+	  if (wb.isInstanceOf[XSSFWorkbook]) file += "x"
+	  val out = new FileOutputStream(file)
+	  wb.write(out)
+	  out.close()
+	  
+	}
+
+	def main(args: Array[String]) {
+	
+
+	val datiFattura = DatiFattura(
+			Set(Prestazione(
+					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
+					"consulenza",
+					"Consulenza Gennaio",
+					14,
+					210									
+					))    
+			)
+			
+	val datiFatturazione = DatiFatturazione(
+					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
+					1,
+					"Consulenza Gennaio ALTEN",
+					3586.80,
+					"rimessa diretta"
+					)
 					
-					fattura(wb,sheet,DatiFattura(
-							Set(Prestazione(
-							  DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
-							  "consulenza",
-							  "Consulenza Gennaio",
-							  14,
-							  210									
-							  ))    
-							))
-							
-			modalitaPagamento(wb,sheet)
-							/*var row = sheet.createRow(2)
-	var cell = row.createCell(4)
-	cell.setCellValue("Enter values")
-	cell.setCellStyle(styles.get("item_right"))
-	row = sheet.createRow(3)
-	cell = row.createCell(2)
-	cell.setCellValue("Loan amount")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellStyle(styles.get("input_$"))
-	cell.setAsActiveCell()
-	row = sheet.createRow(4)
-	cell = row.createCell(2)
-	cell.setCellValue("Annual interest rate")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellStyle(styles.get("input_%"))
-	row = sheet.createRow(5)
-	cell = row.createCell(2)
-	cell.setCellValue("Loan period in years")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellStyle(styles.get("input_i"))
-	row = sheet.createRow(6)
-	cell = row.createCell(2)
-	cell.setCellValue("Start date of loan")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellStyle(styles.get("input_d"))
-	row = sheet.createRow(8)
-	cell = row.createCell(2)
-	cell.setCellValue("Monthly payment")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellFormula("IF(Values_Entered,Monthly_Payment,\"\")")
-	cell.setCellStyle(styles.get("formula_$"))
-	row = sheet.createRow(9)
-	cell = row.createCell(2)
-	cell.setCellValue("Number of payments")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellFormula("IF(Values_Entered,Loan_Years*12,\"\")")
-	cell.setCellStyle(styles.get("formula_i"))
-	row = sheet.createRow(10)
-	cell = row.createCell(2)
-	cell.setCellValue("Total interest")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellFormula("IF(Values_Entered,Total_Cost-Loan_Amount,\"\")")
-	cell.setCellStyle(styles.get("formula_$"))
-	row = sheet.createRow(11)
-	cell = row.createCell(2)
-	cell.setCellValue("Total cost of loan")
-	cell.setCellStyle(styles.get("item_left"))
-	cell = row.createCell(4)
-	cell.setCellFormula("IF(Values_Entered,Monthly_Payment*Number_of_Payments,\"\")")
-	cell.setCellStyle(styles.get("formula_$"))*/
-							var file = "loan-calculator"+System.currentTimeMillis+".xls"
-							if (wb.isInstanceOf[XSSFWorkbook]) file += "x"
-							val out = new FileOutputStream(file)
-	wb.write(out)
-	out.close()
+		val destinatario = Persona(
+							"Spettabile",
+							"ULIXE TECHNOLOGIES MILANO SRL",
+							"Corso Italia 7/Bis",
+							"Busto Arsizio (Va)",
+							"21052",
+							"03359310129"
+
+							)
+
+			exportToXls(datiFattura, datiFatturazione, destinatario)
 	}
 
 	private def createStyles(wb: Workbook): Map[String, CellStyle] = {
@@ -383,14 +332,14 @@ object LoanCalculator {
 					style.setAlignment(CellStyle.ALIGN_RIGHT)
 					style.setFont(itemFont)
 					styles.put("item_right", style)
-					
+
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_LEFT)
 					style.setFont(itemFont)
 					style.setBorderRight(CellStyle.BORDER_DOTTED)
 					style.setBorderLeft(CellStyle.BORDER_DOTTED)
 					styles.put("fattura", style)
-					
+
 					style = wb.createCellStyle()
 					style.setAlignment(CellStyle.ALIGN_CENTER)
 					style.setFont(itemFont)
@@ -399,127 +348,112 @@ object LoanCalculator {
 					//style.setFillBackgroundColor(IndexedColors.BLUE.getIndex)
 					style.setFillForegroundColor(IndexedColors.TURQUOISE.getIndex)
 					style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-					styles.put("fattura_head", style)
-					
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_LEFT)
-					style.setFont(itemFont)
-					//style.setBorderRight(CellStyle.BORDER_DOTTED)
-					//style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					//style.setFillBackgroundColor(IndexedColors.BLUE.getIndex)
-					style.setFillForegroundColor(IndexedColors.ORANGE.getIndex)
-					style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-					styles.put("orange", style)
+			styles.put("fattura_head", style)
 
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_RIGHT)
-					style.setFont(itemFont)
-					style.setBorderRight(CellStyle.BORDER_DOTTED)
-					style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderTop(CellStyle.BORDER_DOTTED)
-					style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setDataFormat(wb.createDataFormat().getFormat("_($* #,##0.00_);_($* (#,##0.00);_($* \"-\"??_);_(@_)"))
-					styles.put("input_$", style)
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_RIGHT)
-					style.setFont(itemFont)
-					style.setBorderRight(CellStyle.BORDER_DOTTED)
-					style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderTop(CellStyle.BORDER_DOTTED)
-					style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setDataFormat(wb.createDataFormat().getFormat("0.000%"))
-					styles.put("input_%", style)
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_RIGHT)
-					style.setFont(itemFont)
-					style.setBorderRight(CellStyle.BORDER_DOTTED)
-					style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderTop(CellStyle.BORDER_DOTTED)
-					style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setDataFormat(wb.createDataFormat().getFormat("0"))
-					styles.put("input_i", style)
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_CENTER)
-					style.setFont(itemFont)
-					style.setDataFormat(wb.createDataFormat().getFormat("m/d/yy"))
-					styles.put("input_d", style)
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_RIGHT)
-					style.setFont(itemFont)
-					style.setBorderRight(CellStyle.BORDER_DOTTED)
-					style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderTop(CellStyle.BORDER_DOTTED)
-					style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setDataFormat(wb.createDataFormat().getFormat("$##,##0.00"))
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex)
-					style.setFillPattern(CellStyle.SOLID_FOREGROUND)
-					styles.put("formula_$", style)
-					style = wb.createCellStyle()
-					style.setAlignment(CellStyle.ALIGN_RIGHT)
-					style.setFont(itemFont)
-					style.setBorderRight(CellStyle.BORDER_DOTTED)
-					style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderLeft(CellStyle.BORDER_DOTTED)
-					style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setBorderTop(CellStyle.BORDER_DOTTED)
-					style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setDataFormat(wb.createDataFormat().getFormat("0"))
-					style.setBorderBottom(CellStyle.BORDER_DOTTED)
-					style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
-					style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex)
-					style.setFillPattern(CellStyle.SOLID_FOREGROUND)
-					styles.put("formula_i", style)
-					styles
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_LEFT)
+			style.setFont(itemFont)
+			//style.setBorderRight(CellStyle.BORDER_DOTTED)
+			//style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			//style.setFillBackgroundColor(IndexedColors.BLUE.getIndex)
+			style.setFillForegroundColor(IndexedColors.ORANGE.getIndex)
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			styles.put("orange", style)
+
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex)
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			styles.put("yellow", style)
+
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(simpleBold)
+			style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex)
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			styles.put("yellow_bold", style)
+
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setBorderRight(CellStyle.BORDER_DOTTED)
+			style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderTop(CellStyle.BORDER_DOTTED)
+			style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setDataFormat(wb.createDataFormat().getFormat("_($* #,##0.00_);_($* (#,##0.00);_($* \"-\"??_);_(@_)"))
+			styles.put("input_$", style)
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setBorderRight(CellStyle.BORDER_DOTTED)
+			style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderTop(CellStyle.BORDER_DOTTED)
+			style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setDataFormat(wb.createDataFormat().getFormat("0.000%"))
+			styles.put("input_%", style)
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setBorderRight(CellStyle.BORDER_DOTTED)
+			style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderTop(CellStyle.BORDER_DOTTED)
+			style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setDataFormat(wb.createDataFormat().getFormat("0"))
+			styles.put("input_i", style)
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_CENTER)
+			style.setFont(itemFont)
+			style.setDataFormat(wb.createDataFormat().getFormat("m/d/yy"))
+			styles.put("input_d", style)
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setBorderRight(CellStyle.BORDER_DOTTED)
+			style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderTop(CellStyle.BORDER_DOTTED)
+			style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setDataFormat(wb.createDataFormat().getFormat("$##,##0.00"))
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex)
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND)
+			styles.put("formula_$", style)
+			style = wb.createCellStyle()
+			style.setAlignment(CellStyle.ALIGN_RIGHT)
+			style.setFont(itemFont)
+			style.setBorderRight(CellStyle.BORDER_DOTTED)
+			style.setRightBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderLeft(CellStyle.BORDER_DOTTED)
+			style.setLeftBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setBorderTop(CellStyle.BORDER_DOTTED)
+			style.setTopBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setDataFormat(wb.createDataFormat().getFormat("0"))
+			style.setBorderBottom(CellStyle.BORDER_DOTTED)
+			style.setBottomBorderColor(IndexedColors.GREY_40_PERCENT.getIndex)
+			style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex)
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND)
+			styles.put("formula_i", style)
+			styles
 	}
 
-	def createNames(wb: Workbook) {
-		var name: Name = null
-				name = wb.createName()
-				name.setNameName("Interest_Rate")
-				name.setRefersToFormula("'Loan Calculator'!$E$5")
-				name = wb.createName()
-				name.setNameName("Loan_Amount")
-				name.setRefersToFormula("'Loan Calculator'!$E$4")
-				name = wb.createName()
-				name.setNameName("Loan_Start")
-				name.setRefersToFormula("'Loan Calculator'!$E$7")
-				name = wb.createName()
-				name.setNameName("Loan_Years")
-				name.setRefersToFormula("'Loan Calculator'!$E$6")
-				name = wb.createName()
-				name.setNameName("Number_of_Payments")
-				name.setRefersToFormula("'Loan Calculator'!$E$10")
-				name = wb.createName()
-				name.setNameName("Monthly_Payment")
-				name.setRefersToFormula("-PMT(Interest_Rate/12,Number_of_Payments,Loan_Amount)")
-				name = wb.createName()
-				name.setNameName("Total_Cost")
-				name.setRefersToFormula("'Loan Calculator'!$E$12")
-				name = wb.createName()
-				name.setNameName("Total_Interest")
-				name.setRefersToFormula("'Loan Calculator'!$E$11")
-				name = wb.createName()
-				name.setNameName("Values_Entered")
-				name.setRefersToFormula("IF(Loan_Amount*Interest_Rate*Loan_Years*Loan_Start>0,1,0)")
-	}
+	
 }

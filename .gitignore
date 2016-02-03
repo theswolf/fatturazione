@@ -7,3 +7,4 @@
 .project
 RUNNING_PID
 *.xls*
+**/.idea/*

@@ -8,3 +8,4 @@
 RUNNING_PID
 *.xls*
 **/.idea/*
+*.db

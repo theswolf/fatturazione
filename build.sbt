@@ -9,12 +9,23 @@ libraryDependencies  ++= Seq(
   "org.apache.poi" % "poi-ooxml" % "3.13",
   "com.github.nscala-time" %% "nscala-time" % "2.8.0",
   "com.sparkjava" % "spark-core" % "2.3",
-  "org.squeryl" % "squeryl_2.11" % "0.9.5-7",
+  "org.hibernate" % "hibernate-core" % "5.0.7.Final" ,
   "com.h2database" % "h2" % "1.4.190",
-  "junit" % "junit" % "4.8.1" % "test"
-
+  "org.scalactic" %% "scalactic" % "2.2.6",
+  
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+  "junit" % "junit" % "4.8.1" % "test",
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % "test"
+ // "org.mockito" % "mockito-core" % "2.0.41-beta" % "test"
 
 )
 
 val h2 = "com.h2database" % "h2" % "1.4.190"
+
+resolvers +="Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+resolvers +="Sonatype OSS Dist" at "https://oss.sonatype.org/content/repositories"
+resolvers += "Central Repository" at "https://repo1.maven.org/maven2"
+resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
+externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
 

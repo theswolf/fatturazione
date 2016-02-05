@@ -16,7 +16,7 @@ import org.joda.time.format.DateTimeFormat
 import model.Persona
 import model.Persona
 import model.Prestazione
-import model.DatiFattura
+
 
 object LoanCalculator {
 
@@ -66,7 +66,7 @@ object LoanCalculator {
 		wb
 	}
 
-	def riepilogo(wb: Workbook, sheet: Sheet,datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
+	def riepilogo(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFatturazione)(implicit styles: Map[String, CellStyle]):Workbook = {
 		val totImponibile = imponibile(datiFatturazione)
 				val iva = (22 * totImponibile) / 100;
 		row(28,11,13,sheet,Option(styles.get("yellow")),Seq("TOTALE IMPONIBILE","","€ "+((d:Double) => f"$d%1.2f")(totImponibile)),false)
@@ -77,9 +77,9 @@ object LoanCalculator {
 		wb
 	}
 
-	def imponibile(d: DatiFattura):Double = {(d.prestazioni.map { p => p.euro }(collection.breakOut): List[(Double)]).sum}
+	def imponibile(d: DatiFatturazione):Double = {(d.prestazioni.map { p => p.euro() }(collection.breakOut): List[(Double)]).sum}
 
-	def fattura(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFattura)(implicit styles: Map[String, CellStyle]):Workbook = {
+	def fattura(wb: Workbook, sheet: Sheet, datiFatturazione:DatiFatturazione)(implicit styles: Map[String, CellStyle]):Workbook = {
 		val startrow = 12
 				val height = 15
 				val startcol=8
@@ -209,7 +209,7 @@ object LoanCalculator {
 		titleRow
 	} 
 	
-	def exportToXls(datiFattura:DatiFattura,datiFatturazione:DatiFatturazione,dest:Persona) = {
+	def exportToXls(datiFatturazione:DatiFatturazione,dest:Persona) = {
 	  
 	var  wb = new XSSFWorkbook()
 	implicit val styles = createStyles(wb)
@@ -236,9 +236,9 @@ object LoanCalculator {
 	    intestazione(wb, sheet)
 	  dati(wb, sheet, datiFatturazione)
 	  destinatario(wb, sheet, dest)
-    fattura(wb,sheet,datiFattura)
+    fattura(wb,sheet,datiFatturazione)
     modalitaPagamento(wb,sheet)
-	  riepilogo(wb,sheet,datiFattura)
+	  riepilogo(wb,sheet,datiFatturazione)
 
 	 var file = "loan-calculator"+System.currentTimeMillis+".xls"
 	  if (wb.isInstanceOf[XSSFWorkbook]) file += "x"
@@ -251,17 +251,11 @@ object LoanCalculator {
 	def main(args: Array[String]) {
 	
 
-	val datiFattura = DatiFattura(
-			Set(Prestazione(
-					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
-					"consulenza",
-					"Consulenza Gennaio",
-					14,
-					210									
-					))    
-			)
+
+
+					
 			
-	val datiFatturazione = DatiFatturazione(
+	val datiFatturazione = new DatiFatturazione(
 					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
 					1,
 					"Consulenza Gennaio ALTEN",
@@ -269,7 +263,7 @@ object LoanCalculator {
 					"rimessa diretta"
 					)
 					
-		val destinatario = Persona(
+		val destinatario = new Persona(
 							"Spettabile",
 							"ULIXE TECHNOLOGIES MILANO SRL",
 							"Corso Italia 7/Bis",
@@ -279,7 +273,7 @@ object LoanCalculator {
 
 							)
 
-			exportToXls(datiFattura, datiFatturazione, destinatario)
+			exportToXls(datiFatturazione, destinatario)
 	}
 
 	private def createStyles(wb: Workbook): Map[String, CellStyle] = {

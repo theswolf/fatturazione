@@ -9,6 +9,5 @@ RUNNING_PID
 *.xls*
 **/.idea/*
 *.db
-"**.cache-tests/*" 
-"**./.cache-tests/*" 
-".cache-tests/*" 
+.cache-tests
+

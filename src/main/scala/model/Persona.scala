@@ -1,6 +1,7 @@
 package model
 
 import javax.persistence.Entity
+import org.hibernate.Session
 
 @Entity
 case class Persona(
@@ -13,5 +14,12 @@ case class Persona(
      codFiscale:String=""
 
   ) extends BaseORM{
+  
+  private def this() = this("","","","","","")
+  
+   def save(implicit session:Session):Persona = {
+        session.save(this)
+        this
+    }
    
 }

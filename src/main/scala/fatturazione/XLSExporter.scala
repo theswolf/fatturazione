@@ -35,7 +35,7 @@ object LoanCalculator {
 		//val titleRow = sheet.createRow(0)
 		row(5,1,1,sheet,Option(styles.get("item_left")),"Data Fatt.",true)
 		row(5,2,2,sheet,Option(styles.get("item_rigth")),
-				Option(datiFatturazione.dataFatt).getOrElse(DateTime.now()).toString("dd MMM yyyy")
+				Option(new DateTime(datiFatturazione.dataFatt)).getOrElse(DateTime.now()).toString("dd MMM yyyy")
 				,true)
 
     row(6,1,2,sheet,Option(styles.get("item_left_bold")),"Num Fatt.",true)
@@ -88,7 +88,7 @@ object LoanCalculator {
 				var counter = 1;
 		datiFatturazione.prestazioni.map { p =>  
 
-		row(startrow+counter,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(p.data.toString("dd/MM/yyyy"),p.rif,p.prestazione,p.gg,p.euroUnit,"€ "+((d:Double) => f"$d%1.2f")(p.euro)),false)
+		row(startrow+counter,startcol,startcol+width,sheet,Option(styles.get("fattura")),Seq(new DateTime(p.data).toString("dd/MM/yyyy"),p.rif,p.prestazione,p.gg,p.euroUnit,"€ "+((d:Double) => f"$d%1.2f")(p.euro)),false)
 		counter+=1
 		}
 
@@ -256,7 +256,7 @@ object LoanCalculator {
 					
 			
 	val datiFatturazione = new DatiFatturazione(
-					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131") ,
+					DateTimeFormat.forPattern("yyyyMMdd").parseDateTime("20160131").toDate() ,
 					1,
 					"Consulenza Gennaio ALTEN",
 					3586.80,

@@ -11,22 +11,18 @@ import spark.Request
 import spark.Response
 import webapp.transformer.JSONTransformer
 import com.google.gson.Gson
-import webapp.transformer.LocalDateSerializer
 import com.google.gson.GsonBuilder
-import webapp.transformer.LocalTimeSerializer
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
+import helper.Serializer
+import org.hibernate.Session
+import helper.DBSession
 
 
 
-object RESTController{
+object RESTController extends Serializer with DBSession{
   
-  private val gson: Gson = (new GsonBuilder())
-       .registerTypeAdapter(classOf[LocalDate], new LocalDateSerializer())
-       .registerTypeAdapter(classOf[LocalTime], new LocalTimeSerializer())
-       .create()
   
-  val session = HibernateUtil.sessionFactory.openSession
   def mapModelToURL {
     
     get("/data/:model", setRoute { (req:Request,res:Response) => 
@@ -62,32 +58,43 @@ object RESTController{
   }
   
   def withGet(dataModel:String):AnyRef = {
-    session.createCriteria(getMapping {dataModel}).list()
+    
+    implicit val sess = session()
+    inSesssion(sess.createCriteria(getMapping {dataModel}).list())
+    
   }
   
   def withGet(dataModel:String,id:String):AnyRef = {
-    session.get(getMapping {dataModel}, id toLong)
+    implicit val sess = session()
+    inSesssion(sess.get(getMapping {dataModel}, id toLong))
   }
   
   def withPut(dataModel:String,req:Request):AnyRef = {
+    implicit val sess = session()
     var data = gson.fromJson(req.body,getMapping {dataModel})
-    session.save {data}
-    data
+    inSesssion{sess.save {data} 
+     data}
     //session.createCriteria(getMapping(dataModel)).list()
   }
   
   def withPost(dataModel:String,req:Request):AnyRef = {
     println("Received -> "+req.body)
+    implicit val sess = session()
     var data = gson.fromJson(req.body,getMapping {dataModel})
-    session.saveOrUpdate {data}
-    data
+     inSesssion{
+      //sess.save{data} 
+      data.save
+      //sess.persist{data} 
+    data}
     //session.createCriteria(getMapping(dataModel)).list()
   }
   
   def withDelete(dataModel:String,req:Request):AnyRef = {
+    implicit val sess = session()
     var data = gson.fromJson(req.body,getMapping {dataModel})
-    session.delete(data)
-    data
+    inSesssion{sess.delete {data} 
+    data}
+  
     //session.createCriteria(getMapping(dataModel)).list()
   }
   

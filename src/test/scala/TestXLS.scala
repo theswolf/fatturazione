@@ -10,20 +10,16 @@ import model.DatiFatturazione
 import webapp.Fatturazione
 import model.Prestazione
 import scala.collection.mutable.Buffer
-import webapp.transformer.LocalDateSerializer
 import com.google.gson.GsonBuilder
-import webapp.transformer.LocalTimeSerializer
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
+import helper.Serializer
 
-class TestXLS extends FunSuite with BeforeAndAfter with MockFactory{
+class TestXLS extends FunSuite with BeforeAndAfter with MockFactory with Serializer{
   
   val baseUrl = "http://localhost:5555/"
     
-  val gson: Gson = (new GsonBuilder())
-       .registerTypeAdapter(classOf[LocalDate], new LocalDateSerializer())
-       .registerTypeAdapter(classOf[LocalTime], new LocalTimeSerializer())
-       .create()
+
   
   before {
       Fatturazione main Array("") 
@@ -34,20 +30,37 @@ class TestXLS extends FunSuite with BeforeAndAfter with MockFactory{
   }
   
    test("Prestazioni in datiFattura should not be null") {
-        val session = HibernateUtil.sessionFactory.openSession
+               val session = HibernateUtil.sessionFactory.openSession
      
       val dfUrl = url(baseUrl+"data/datiFatturazione")
       dfUrl.setContentType("application/json", "UTF-8")
-      val df = DatiFatturazione(DateTime.now,1,"rif",8,"scaduta")
-      df.insertPrestazioni(Seq(Prestazione(DateTime.now,"rif Prest","description",10,210)))
-      println(gson.toJson(df))
+      val df = DatiFatturazione(DateTime.now.toDate(),1,"rif",8,"scaduta")
+      df.insertPrestazioni(Seq(Prestazione(DateTime.now.toDate,"rif Prest","description",10,210)))
+      //println(gson.toJson(df))
       val post = dfUrl << gson.toJson(df)
       
-      val response = Http(post)
-      println(response().getResponseBody)
+      val result = Http(post OK as.String)
+      val body = result()
+      println("response of post is")
+      println(body)
+      
+      val dfGETUrl = url(baseUrl+"data/datiFatturazione")
+      val get =  Http(dfGETUrl OK as.String)
+      val bodyGet = get()
+       println("response of get is")
+      println(bodyGet)
+      
+       val dfGETUrlP = url(baseUrl+"data/prestazione")
+      val getP =  Http(dfGETUrlP OK as.String)
+      val bodyGetP = getP()
+       println("response of get p is")
+      println(bodyGetP)
+      
+        
+      
       //Http(dfUrl OK as.String)
       
-      assert(1 == scala.collection.JavaConversions.asScalaBuffer(session.createCriteria(classOf[DatiFatturazione]).list()).size)
+    
       
    }
   

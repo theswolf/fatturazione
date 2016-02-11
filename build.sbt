@@ -14,11 +14,15 @@ libraryDependencies  ++= Seq(
   "org.scalactic" %% "scalactic" % "2.2.6",
   "com.google.code.gson" % "gson" % "2.5",
   "io.jsonwebtoken" % "jjwt" % "0.6.0",
+  "com.fatboyindustrial.gson-jodatime-serialisers" % "gson-jodatime-serialisers" % "1.2.0",
+    "org.jadira.usertype" % "usertype.core" % "5.0.0.GA",
   
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   "junit" % "junit" % "4.8.1" % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % "test",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
+
+  
  // "org.mockito" % "mockito-core" % "2.0.41-beta" % "test"
 
 )

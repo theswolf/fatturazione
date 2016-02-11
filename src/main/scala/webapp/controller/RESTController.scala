@@ -1,27 +1,20 @@
 package webapp.controller
 
-import spark.Spark._
-import webapp.Fatturazione.setRoute
-import helper.HibernateUtil
-import model.BaseORM
-import model.DatiFatturazione
-import model.Prestazione
-import model.Persona
+import helper.DBSession
+import helper.Router
+import helper.Serializer
+import javax.persistence.MappedSuperclass
 import spark.Request
 import spark.Response
+import spark.Spark.delete
+import spark.Spark.get
+import spark.Spark.post
+import spark.Spark.put
 import webapp.transformer.JSONTransformer
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import org.joda.time.LocalDate
-import org.joda.time.LocalTime
-import helper.Serializer
-import org.hibernate.Session
-import helper.DBSession
 
 
 
-object RESTController extends Serializer with DBSession{
-  
+object RESTController extends Serializer with DBSession with Router{
   
   def mapModelToURL {
     
@@ -49,13 +42,7 @@ object RESTController extends Serializer with DBSession{
     }[T <: BaseORM] 
   }*/
   
-  def getMapping(dataModel:String):Class[_ <:BaseORM] = {
-    dataModel  match {
-      case "datiFatturazione" => classOf[DatiFatturazione]
-      case "prestazione" => classOf[Prestazione]
-      case "persona" => classOf[Persona]
-    }
-  }
+ 
   
   def withGet(dataModel:String):AnyRef = {
     
@@ -74,7 +61,6 @@ object RESTController extends Serializer with DBSession{
     var data = gson.fromJson(req.body,getMapping {dataModel})
     inSesssion{sess.save {data} 
      data}
-    //session.createCriteria(getMapping(dataModel)).list()
   }
   
   def withPost(dataModel:String,req:Request):AnyRef = {
@@ -82,11 +68,8 @@ object RESTController extends Serializer with DBSession{
     implicit val sess = session()
     var data = gson.fromJson(req.body,getMapping {dataModel})
      inSesssion{
-      //sess.save{data} 
       data.save
-      //sess.persist{data} 
     data}
-    //session.createCriteria(getMapping(dataModel)).list()
   }
   
   def withDelete(dataModel:String,req:Request):AnyRef = {
@@ -95,7 +78,6 @@ object RESTController extends Serializer with DBSession{
     inSesssion{sess.delete {data} 
     data}
   
-    //session.createCriteria(getMapping(dataModel)).list()
   }
   
 }

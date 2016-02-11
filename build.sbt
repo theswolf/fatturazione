@@ -20,7 +20,8 @@ libraryDependencies  ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   "junit" % "junit" % "4.8.1" % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % "test",
-  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
+  "com.sparkjava" % "spark-template-thymeleaf" % "2.3"
 
   
  // "org.mockito" % "mockito-core" % "2.0.41-beta" % "test"

@@ -7,19 +7,11 @@ import spark.Route
 import spark.Spark._
 import spark.ExceptionHandler
 import webapp.controller.RESTController
+import helper.Router
+import webapp.controller.UIController
 
 
-object Fatturazione {
-
-
-  
-  
- def setRoute( func:(Request,Response) => AnyRef):Route = new Route {
-    
-    override def handle(request: Request, response: Response): AnyRef = {
-      func(request,response)
-    }
-  }
+object Fatturazione extends Router{
 
 
   def break = {
@@ -28,14 +20,17 @@ object Fatturazione {
  
   def main(args: Array[String]) {
      
+      staticFileLocation("/public")
       port(5555)
-      get("/", setRoute { (req:Request,res:Response) => "hello"})
+      //get("/", setRoute { (req:Request,res:Response) => "hello"})
       
       get("/test", setRoute { (req:Request,res:Response) => res.body("this is a test") 
         res.body()
         })
         
       RESTController mapModelToURL
+      
+      UIController mapModelToUI
         
      
       exception(classOf[Exception], new ExceptionHandler {
@@ -45,6 +40,7 @@ object Fatturazione {
          }
       })
     
+     
       awaitInitialization
   }
   

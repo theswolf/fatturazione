@@ -8,18 +8,15 @@ import reflect.runtime.{universe => ru}
 import scala.reflect.runtime.universe._
 import model.DatiFatturazione
 import helper.Reflect
+import helper.UIDrawer._
 
 object UIController extends Router with Reflect{
-  
-  
-
-
    
     def mapModelToUI = {
       
       get("/ui/form/:model", setRoute { (req:Request,res:Response) => 
        val data = getFields{req.params(":model")}
-       res.body(data.mkString("\n"))
+       res.body(data renderForm )
        res.body()
       })
       

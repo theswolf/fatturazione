@@ -7,14 +7,15 @@ object Decorators {
 							<label for="_pholder_">
 								_pholder_
 							</label>
-							<input type="text" class="form-control" id="_pholder_">
+							<input type="text" class="form-control" id="_pholder_" value="_value_">
 						</div>"""
   
-  implicit class inputDecorator(x:String)  {
+  implicit class InputDecorator(x:String)  {
     // def times[A](f: => A): Unit = {
     def draw(value:String=""):String = { 
        val regex = "_pholder_".r
-       regex.replaceAllIn(inputpattern, x)
+       val valRegex = "_value_".r
+       regex.replaceAllIn(valRegex.replaceAllIn(inputpattern, value), x)
     }
   }
   

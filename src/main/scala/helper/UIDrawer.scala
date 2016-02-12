@@ -4,6 +4,7 @@ import java.util.Collection
 import java.lang.reflect.Field
 import helper.Decorators._
 import scala.reflect.runtime.{universe => ru}
+import model.BaseORM
 
 object UIDrawer {
   
@@ -19,19 +20,37 @@ object UIDrawer {
               </div>"""
   
   implicit class FieldDrawer(a:Array[Field]) {
-    def draw:Array[String]={
+    def draw(data:Option[AnyRef]):Array[String]={
         a.map( field => field.getType match {
          case c if getType(c).<:<(getType(classOf[Collection[Any]]))  => "coll of "+field.getName 
          case _ => { 
-           field.getName draw ""
+            data match {
+              case None =>  field.getName draw ""
+              case d if classOf[BaseORM].isAssignableFrom(d.get.getClass) => {
+                try {
+                  val method = d.get.getClass.getDeclaredMethod(field.getName)
+                  val value = method.invoke(d.get).toString()
+                  field.getName draw value 
+                }
+                catch {
+                  case t: Throwable => {
+                    t.printStackTrace() 
+                    field.getName draw ""
+                  }// TODO: handle error
+                }
+                 
+              }
+              case _ => field.getName draw ""
+           }
+          
          }
        })
     }
     
     
-    def renderForm:String = {
+    def renderForm(implicit data:Option[AnyRef]):String = {
       val regex = "_theform_".r
-       regex.replaceAllIn(form,  (a draw).mkString("\n"))
+       regex.replaceAllIn(form,  (a draw data).mkString("\n"))
     }
     
    }

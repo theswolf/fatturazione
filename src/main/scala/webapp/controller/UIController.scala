@@ -9,14 +9,24 @@ import scala.reflect.runtime.universe._
 import model.DatiFatturazione
 import helper.Reflect
 import helper.UIDrawer._
+import helper.RESTUtils
+import model.BaseORM
 
-object UIController extends Router with Reflect{
+object UIController extends RESTUtils with Reflect{
    
     def mapModelToUI = {
-      
+       
       get("/ui/form/:model", setRoute { (req:Request,res:Response) => 
        val data = getFields{req.params(":model")}
-       res.body(data renderForm )
+       implicit val default:Option[AnyRef] = None
+       res.body(data renderForm)
+       res.body()
+      })
+      
+      get("/ui/form/:model/:id", setRoute { (req:Request,res:Response) => 
+       val data = getFields{req.params(":model")}
+       val persistedData = withGet( req.params(":model"),req.params(":id"))
+       res.body(data renderForm(Option(persistedData)) )
        res.body()
       })
       

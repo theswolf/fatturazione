@@ -29,6 +29,34 @@ class TestXLS extends FunSuite with BeforeAndAfter with MockFactory with Seriali
     //Fatturazione break
   }
   
+  test("Rendering data") {
+    
+    val dfUrl = url(baseUrl+"data/datiFatturazione")
+      dfUrl.setContentType("application/json", "UTF-8")
+      val df = DatiFatturazione(DateTime.now.toDate(),1,"rif",8,"scaduta")
+      df.insertPrestazioni(Seq(Prestazione(DateTime.now.toDate,"rif Prest","description",10,210)))
+      //println(gson.toJson(df))
+      val post = dfUrl << gson.toJson(df)
+      
+      val result = Http(post OK as.String)
+      val body = result()
+      println("response of post is")
+      println(body)
+      
+      val dfUrlP = url(baseUrl+"ui/form/datiFatturazione/1")
+      dfUrlP.setContentType("application/json", "UTF-8")
+      //val dfp = DatiFatturazione(DateTime.now.toDate(),1,"rif",8,"scaduta")
+      //dfp.insertPrestazioni(Seq(Prestazione(DateTime.now.toDate,"rif Prest","description",10,210)))
+      //println(gson.toJson(df))
+      //val post2 = dfUrlP << gson.toJson(dfp)
+      
+      val result2 = Http(dfUrlP OK as.String)
+      val body2 = result2()
+      println("response of post2 is")
+      println(body2)
+    
+  }
+  
    test("Prestazioni in datiFattura should not be null") {
                val session = HibernateUtil.sessionFactory.openSession
      

@@ -8,7 +8,7 @@ import reflect.runtime.{universe => ru}
 import scala.reflect.runtime.universe._
 import model.DatiFatturazione
 import helper.Reflect
-import helper.UIDrawer._
+import ui.FormDecorator._
 import helper.RESTUtils
 import model.BaseORM
 

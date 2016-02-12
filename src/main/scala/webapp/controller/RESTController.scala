@@ -24,6 +24,9 @@ object RESTController extends RESTUtils{
        
     get("/data/:model/:id", setRoute { (req:Request,res:Response) => 
        withGet( req.params(":model"),req.params(":id"))}, new JSONTransformer)
+       
+    get("/data/:model/:id/:collection", setRoute { (req:Request,res:Response) => 
+       withGet( req.params(":collection") ,req.params(":id") ,req.params(":model")) }, new JSONTransformer)
     
     put("/data/:model", setRoute { (req:Request,res:Response) => 
        withPut( req.params(":model"), req)}, new JSONTransformer)

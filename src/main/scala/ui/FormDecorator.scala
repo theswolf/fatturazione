@@ -1,14 +1,15 @@
-package helper
+package ui
 
-import java.util.Collection
-import java.lang.reflect.Field
-import helper.Decorators._
-import scala.reflect.runtime.{universe => ru}
+import helper.Reflect
 import model.BaseORM
+import java.lang.reflect.Field
+import java.util.Collection
+import ui.InputDecorator._
 
-object UIDrawer {
-  
-  val form = """<div class="row">
+object FormDecorator extends Reflect{
+    implicit class FormDrawer(a:Array[Field]) {
+    
+      val form = """<div class="row">
 				          <div class="col-md-6">
 					          <form role="form">
                       _theform_
@@ -18,8 +19,7 @@ object UIDrawer {
 					        </form>
 				        </div>
               </div>"""
-  
-  implicit class FieldDrawer(a:Array[Field]) {
+    
     def draw(data:Option[AnyRef]):Array[String]={
         a.map( field => field.getType match {
          case c if getType(c).<:<(getType(classOf[Collection[Any]]))  => "coll of "+field.getName 
@@ -53,12 +53,5 @@ object UIDrawer {
        regex.replaceAllIn(form,  (a draw data).mkString("\n"))
     }
     
-   }
-  
-  
-    
-   def getType[T](clazz: Class[T]): ru.Type = {
-      val runtimeMirror = ru.runtimeMirror(clazz.getClassLoader)
-    runtimeMirror.classSymbol(clazz).toType
   }
 }

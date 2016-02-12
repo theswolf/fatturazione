@@ -2,6 +2,7 @@ package helper
 
 import spark.Request
 import model.BaseORM
+import org.hibernate.criterion.Property
 
 trait RESTUtils extends DBSession with Router with Serializer{
   def withGet(dataModel:String):AnyRef = {
@@ -14,6 +15,15 @@ trait RESTUtils extends DBSession with Router with Serializer{
   def withGet(dataModel:String,id:String):AnyRef = {
     implicit val sess = session()
     inSesssion(sess.get(getMapping {dataModel}, id toLong))
+  }
+  
+  def withGet(dataModel:String,id:String,dataParent:String):AnyRef = {
+    implicit val sess = session()
+    inSesssion{
+      sess.createCriteria(getMapping {dataModel})
+      .add(Property.forName(dataParent+".id").eq(id toLong))
+      .list()
+    }
   }
   
   def withPut(dataModel:String,req:Request):AnyRef = {

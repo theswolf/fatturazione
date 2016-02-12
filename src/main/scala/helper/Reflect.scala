@@ -10,6 +10,7 @@ import model.Persona
 import org.eclipse.jetty.util.Fields
 import java.lang.reflect.Field
 import java.util.Collection
+import scala.reflect.runtime.{universe => ru}
 
 
 trait Reflect {
@@ -27,7 +28,13 @@ trait Reflect {
       case "datiFatturazione" => extractFields[DatiFatturazione]
       case "prestazione" => extractFields[Prestazione]
       case "persona" => extractFields[Persona]
+      case _ => throw new Exception("No mapped model for "+dataModel)
     }
+  }
+   
+    def getType[T](clazz: Class[T]): ru.Type = {
+      val runtimeMirror = ru.runtimeMirror(clazz.getClassLoader)
+    runtimeMirror.classSymbol(clazz).toType
   }
   
 }

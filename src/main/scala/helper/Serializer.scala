@@ -12,7 +12,7 @@ trait Serializer {
   .setExclusionStrategies(new ExclusionStrategy() {
     def shouldSkipField(f:FieldAttributes):Boolean = {
       f.getName.equalsIgnoreCase("session") ||
-      f.getDeclaringClass == classOf[Prestazione] && f.getName.equalsIgnoreCase("datiFattura")
+      f.getDeclaringClass == classOf[Prestazione] && f.getName.equalsIgnoreCase("datiFatturazione")
     }
     
     def shouldSkipClass(c:Class[_]):Boolean = {

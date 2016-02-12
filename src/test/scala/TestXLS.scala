@@ -91,6 +91,36 @@ class TestXLS extends FunSuite with BeforeAndAfter with MockFactory with Seriali
     
       
    }
+   
+    test("OneToManyIsMapped") {
+               val session = HibernateUtil.sessionFactory.openSession
+     
+      val dfUrl = url(baseUrl+"data/datiFatturazione")
+      dfUrl.setContentType("application/json", "UTF-8")
+      val df = DatiFatturazione(DateTime.now.toDate(),1,"rif",8,"scaduta")
+      df.insertPrestazioni(Seq(Prestazione(DateTime.now.toDate,"rif Prest","description",10,210)))
+      //println(gson.toJson(df))
+      val post = dfUrl << gson.toJson(df)
+      
+      val result = Http(post OK as.String)
+      val body = result()
+      println("response of post is")
+      println(body)
+      
+      val dfGETUrl = url(baseUrl+"data/datiFatturazione/1/prestazione")
+      val get =  Http(dfGETUrl OK as.String)
+      val bodyGet = get()
+       println("response of get is")
+      println(bodyGet)
+     
+      
+        
+      
+      //Http(dfUrl OK as.String)
+      
+    
+      
+   }
   
   
 }

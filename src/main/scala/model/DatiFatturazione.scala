@@ -36,7 +36,7 @@ case class DatiFatturazione(
   
     private def this() = this(DateTime.now.toDate(),0,"",0l,"")
   
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "datiFattura")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "datiFatturazione")
     //var prestazioni:Seq[Prestazione]=Seq()
     var prestazioni:Collection[Prestazione] = asJavaCollection(Seq())
   
@@ -48,8 +48,8 @@ case class DatiFatturazione(
     def save(implicit session:Session):DatiFatturazione = {
         session.save(this)
         for(prestazione <- collectionAsScalaIterable(prestazioni)) {
-          prestazione.datiFattura = DatiFatturazione()
-          prestazione.datiFattura.id = this.id
+          prestazione.datiFatturazione = DatiFatturazione()
+          prestazione.datiFatturazione.id = this.id
           session.save(prestazione)
         }
         this

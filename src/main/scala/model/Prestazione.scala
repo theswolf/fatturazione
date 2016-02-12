@@ -31,8 +31,8 @@ case class Prestazione (
   private def this() = this(DateTime.now.toDate(),"","",1,1)
   
   @ManyToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name = "datiFatturaId", nullable = false)
-   var datiFattura = DatiFatturazione()
+	@JoinColumn(name = "datiFatturazioneId", nullable = false)
+   var datiFatturazione = DatiFatturazione()
  
    def euro():Double = {
      euroUnit*gg
